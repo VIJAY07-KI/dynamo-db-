@@ -1,0 +1,73 @@
+service: products-api
+
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs20.x          # ✅ Latest runtime
+  region: eu-central-1         # ✅ Your AWS region (Frankfurt)
+  stage: dev
+  environment:
+    PRODUCTS_TABLE: ProductsTable
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:PutItem
+        - dynamodb:GetItem
+        - dynamodb:Scan
+        - dynamodb:DeleteItem
+      Resource: arn:aws:dynamodb:eu-central-1:*:table/ProductsTable
+
+functions:
+  createProduct:
+    handler: src/handler.createProduct
+    events:
+      - http:
+          path: products
+          method: post
+
+  getProduct:
+    handler: src/handler.getProduct
+    events:
+      - http:
+          path: products/{id}
+          method: get
+
+  updateProduct:
+    handler: src/handler.updateProduct
+    events:
+      - http:
+          path: products/{id}
+          method: put
+
+  deleteProduct:
+    handler: src/handler.deleteProduct
+    events:
+      - http:
+          path: products/{id}
+          method: delete
+
+  listProduct:
+    handler: src/handler.listProduct
+    events:
+      - http:
+          path: products
+          method: get
+
+resources:
+  Resources:
+    ProductsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ProductsTable
+        BillingMode: PAY_PER_REQUEST
+        AttributeDefinitions:
+          - AttributeName: productID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: productID
+            KeyType: HASH
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-typescript
